@@ -5,6 +5,8 @@ from PIL import Image
 from generator import generar_cartas, crear_carta
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.utils import ImageReader
+
 
 VALORES_N = [2, 3, 5, 7, 11, 13]
 DPI = 300
@@ -40,11 +42,12 @@ if st.button("Generar mazo"):
     elif len(imagenes_subidas) < necesarias:
         st.error(f"Necesitás {necesarias} imágenes, pero subiste {len(imagenes_subidas)}.")
     else:
+        # Cargar imágenes
         imagenes = [Image.open(img).convert("RGBA") for img in imagenes_subidas]
         cartas_idx = generar_cartas(N)
         cartas = [crear_carta(imagenes, indices, ANCHO, ALTO, 100, 180) for indices in cartas_idx]
 
-        # ZIP con JPG
+        # 🔹 Generar ZIP con JPG
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             for i, carta in enumerate(cartas):
@@ -53,7 +56,7 @@ if st.button("Generar mazo"):
                 zf.writestr(f"carta_{i+1}.jpg", img_bytes.getvalue())
         zip_buffer.seek(0)
 
-        # PDF A4 con tamaño real
+        # 🔹 Generar PDF A4 respetando tamaño real
         pdf_buffer = io.BytesIO()
         c = canvas.Canvas(pdf_buffer, pagesize=A4)
         page_w, page_h = A4
@@ -70,12 +73,14 @@ if st.button("Generar mazo"):
             row = (i // cols) % rows
             x = margin_x + col * card_w
             y = page_h - margin_y - (row + 1) * card_h
-            tmp_img = io.BytesIO()
-            carta.convert("RGB").save(tmp_img, "JPEG")
-            tmp_img.seek(0)
-            c.drawImage(tmp_img, x, y, width=card_w, height=card_h)
-            if (i+1) % (rows * cols) == 0:
+
+            carta_rgb = carta.convert("RGB")
+            img_reader = ImageReader(carta_rgb)
+            c.drawImage(img_reader, x, y, width=card_w, height=card_h)
+
+            if (i + 1) % (rows * cols) == 0:
                 c.showPage()
+
         c.save()
         pdf_buffer.seek(0)
 
