@@ -49,7 +49,7 @@ if st.button("Generar mazo"):
         with zipfile.ZipFile(zip_buffer, "w") as zf:
             for i, carta in enumerate(cartas):
                 img_bytes = io.BytesIO()
-                carta.save(img_bytes, format="JPEG")
+                carta.convert("RGB").save(img_bytes, format="JPEG")
                 zf.writestr(f"carta_{i+1}.jpg", img_bytes.getvalue())
         zip_buffer.seek(0)
 
@@ -71,7 +71,7 @@ if st.button("Generar mazo"):
             x = margin_x + col * card_w
             y = page_h - margin_y - (row + 1) * card_h
             tmp_img = io.BytesIO()
-            carta.save(tmp_img, "JPEG")
+            carta.convert("RGB").save(tmp_img, "JPEG")
             tmp_img.seek(0)
             c.drawImage(tmp_img, x, y, width=card_w, height=card_h)
             if (i+1) % (rows * cols) == 0:
